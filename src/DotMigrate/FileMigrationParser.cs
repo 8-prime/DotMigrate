@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Text;
 using DotMigrate.Abstractions;
+using DotMigrate.Migrations;
 
 namespace DotMigrate;
 

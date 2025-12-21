@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using DotMigrate.Abstractions;
 
-namespace DotMigrate;
+namespace DotMigrate.Migrations;
 
 public class FilesystemMigrationSource : IMigrationSource
 {

@@ -1,6 +1,7 @@
 ﻿using System;
 using DotMigrate.Abstractions;
 using DotMigrate.Builder;
+using DotMigrate.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -18,6 +19,12 @@ public static class MigrationsSetupExtensions
         builder.Services.AddSingleton(optionsBuilder.Create());
         builder.Services.AddSingleton<Migrator<TMigrator>>();
 
+        return builder;
+    }
+
+    public static IHostApplicationBuilder MigrateOnStart<TMigrator>(this IHostApplicationBuilder builder)
+    {
+        builder.Services.AddHostedService<MigrationsRunerService<TMigrator>>();
         return builder;
     }
 }

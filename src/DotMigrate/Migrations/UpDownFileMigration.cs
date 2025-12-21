@@ -1,9 +1,9 @@
 ﻿using DotMigrate.Abstractions;
 
-namespace DotMigrate;
+namespace DotMigrate.Migrations;
 
 public class UpDownFileMigration : FileMigration, IUpDownMigration
 {
     public string UpCommand => Command;
-    public string DownCommand { get; init; }
+    public required string DownCommand { get; init; }
 }

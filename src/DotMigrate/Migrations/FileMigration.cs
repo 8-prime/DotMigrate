@@ -1,6 +1,6 @@
 ﻿using DotMigrate.Abstractions;
 
-namespace DotMigrate;
+namespace DotMigrate.Migrations;
 
 public class FileMigration : IMigration
 {
