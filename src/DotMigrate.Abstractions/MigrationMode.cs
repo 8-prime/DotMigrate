@@ -1,8 +1,7 @@
-﻿namespace DotMigrate.Abstractions
+﻿namespace DotMigrate.Abstractions;
+
+public enum MigrationMode
 {
-    public enum MigrationMode
-    {
-        Validate,
-        Migrate
-    }
+    Validate,
+    Migrate
 }

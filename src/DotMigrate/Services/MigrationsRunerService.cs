@@ -1,23 +1,20 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
-using DotMigrate.Abstractions;
 using Microsoft.Extensions.Hosting;
 
-namespace DotMigrate.Services
+namespace DotMigrate.Services;
+
+public class MigrationsRunerService<TMigrator> : BackgroundService
 {
-    public class MigrationsRunerService<TMigrator> : BackgroundService
+    private readonly Migrator<TMigrator> _migrator;
+
+    public MigrationsRunerService(Migrator<TMigrator> migrator)
     {
-        private readonly Migrator<TMigrator> _migrator;
+        _migrator = migrator;
+    }
 
-        public MigrationsRunerService(Migrator<TMigrator> migrator)
-        {
-            _migrator = migrator;
-        }
-
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            await _migrator.RunAsync(stoppingToken);
-        }
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        await _migrator.RunAsync(stoppingToken);
     }
 }

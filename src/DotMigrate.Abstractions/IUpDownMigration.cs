@@ -1,8 +1,7 @@
-﻿namespace DotMigrate.Abstractions
+﻿namespace DotMigrate.Abstractions;
+
+public interface IUpDownMigration : IMigration
 {
-    public interface IUpDownMigration : IMigration
-    {
-        string UpCommand { get; }
-        string DownCommand { get; }        
-    }
+    string UpCommand { get; }
+    string DownCommand { get; }
 }
