@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="DotMigrate.Abstractions/DotMigrate.Abstractions.csproj" />
+  <Project Path="DotMigrate.Databases/DotMigrate.Databases.csproj" />
+  <Project Path="DotMigrate/DotMigrate.csproj" />
+</Solution>
