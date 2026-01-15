@@ -6,7 +6,7 @@ namespace DotMigrate.Builder;
 public class MigrationOptionsBuilder<TMigrator>
 {
     private AMigrationConfiguration? _configuration;
-    private IDatabaseProvider? _provider;
+    private IMigrationDatabaseProvider? _provider;
     private IMigrationSource? _source;
 
     public void WithConfiguration(AMigrationConfiguration configuration)
@@ -14,7 +14,7 @@ public class MigrationOptionsBuilder<TMigrator>
         _configuration = configuration;
     }
 
-    public void WithProvider(IDatabaseProvider provider)
+    public void WithProvider(IMigrationDatabaseProvider provider)
     {
         _provider = provider;
     }

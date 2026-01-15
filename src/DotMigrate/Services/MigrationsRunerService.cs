@@ -1,14 +1,15 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
+using DotMigrate.Abstractions;
 using Microsoft.Extensions.Hosting;
 
 namespace DotMigrate.Services;
 
 public class MigrationsRunerService<TMigrator> : BackgroundService
 {
-    private readonly Migrator<TMigrator> _migrator;
+    private readonly IMigrator<TMigrator> _migrator;
 
-    public MigrationsRunerService(Migrator<TMigrator> migrator)
+    public MigrationsRunerService(IMigrator<TMigrator> migrator)
     {
         _migrator = migrator;
     }

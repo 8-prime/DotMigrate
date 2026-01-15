@@ -3,17 +3,17 @@ using Microsoft.Data.SqlClient;
 
 namespace DotMigrate.Databases.MsSql;
 
-public class MsSqlDatabaseProvider : ADatabaseProvider
+public class MsSqlMigrationDatabaseProvider : AMigrationDatabaseProvider
 {
     private readonly MsSqlMigrationConfiguration _sqlMigrationConfiguration;
 
-    public MsSqlDatabaseProvider(string connectionString, MsSqlMigrationConfiguration configuration) : base(
+    public MsSqlMigrationDatabaseProvider(string connectionString, MsSqlMigrationConfiguration configuration) : base(
         configuration, new SqlConnection(connectionString))
     {
         _sqlMigrationConfiguration = configuration;
     }
 
-    public MsSqlDatabaseProvider(DbConnection connection, MsSqlMigrationConfiguration configuration) : base(
+    public MsSqlMigrationDatabaseProvider(DbConnection connection, MsSqlMigrationConfiguration configuration) : base(
         configuration, connection)
     {
         _sqlMigrationConfiguration = configuration;
@@ -55,12 +55,12 @@ public class MsSqlDatabaseProvider : ADatabaseProvider
     protected override string GetLastMigrationSql()
     {
         return
-            $"SELECT TOP 1 [Name] FROM [{_sqlMigrationConfiguration.SchemaName}].[{_sqlMigrationConfiguration.MigrationTableName}] ORDER BY [Id] desc;";
+            $"SELECT TOP 1 [Index] FROM [{_sqlMigrationConfiguration.SchemaName}].[{_sqlMigrationConfiguration.MigrationTableName}] ORDER BY [Id] desc;";
     }
 
     protected override string InsertMigrationSql()
     {
         return
-            $@"INSERT INTO [{_sqlMigrationConfiguration.SchemaName}].[{_sqlMigrationConfiguration.MigrationTableName}] ([Index], [Name], [CreatedAt]) VALUES (@Index, @Name, GETDATE());";
+            $"INSERT INTO [{_sqlMigrationConfiguration.SchemaName}].[{_sqlMigrationConfiguration.MigrationTableName}] ([Index], [Name], [CreatedAt]) VALUES (@Index, @Name, GETDATE());";
     }
 }

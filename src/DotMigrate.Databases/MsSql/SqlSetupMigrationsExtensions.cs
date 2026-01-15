@@ -9,7 +9,7 @@ public static class SqlSetupMigrationsExtensions
         MsSqlMigrationConfiguration configuration)
     {
         builder.WithConfiguration(configuration);
-        var provider = new MsSqlDatabaseProvider(configuration.ConnectionString, configuration);
+        var provider = new MsSqlMigrationDatabaseProvider(configuration.ConnectionString, configuration);
         builder.WithProvider(provider);
         return builder;
     }

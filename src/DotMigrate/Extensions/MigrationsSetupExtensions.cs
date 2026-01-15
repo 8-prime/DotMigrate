@@ -17,7 +17,7 @@ public static class MigrationsSetupExtensions
         configuration(optionsBuilder);
         optionsBuilder.WithSource(source);
         builder.Services.AddSingleton(optionsBuilder.Create());
-        builder.Services.AddSingleton<Migrator<TMigrator>>();
+        builder.Services.AddSingleton<IMigrator<TMigrator>, Migrator<TMigrator>>();
 
         return builder;
     }

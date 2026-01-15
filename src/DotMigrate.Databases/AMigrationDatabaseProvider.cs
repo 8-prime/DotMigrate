@@ -8,8 +8,10 @@ using DotMigrate.Exceptions;
 
 namespace DotMigrate.Databases;
 
-public abstract class ADatabaseProvider(AMigrationConfiguration migrationConfiguration, DbConnection connection)
-    : IDatabaseProvider
+public abstract class AMigrationDatabaseProvider(
+    AMigrationConfiguration migrationConfiguration,
+    DbConnection connection)
+    : IMigrationDatabaseProvider
 
 {
     protected readonly DbConnection Connection = connection;
@@ -53,9 +55,9 @@ public abstract class ADatabaseProvider(AMigrationConfiguration migrationConfigu
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
-    public virtual string GetVersion()
+    public virtual int GetVersion()
     {
-        var version = string.Empty;
+        var version = 0;
         using var command = Connection.CreateCommand();
         command.CommandText = GetLastMigrationSql();
         command.Transaction = null;
@@ -64,7 +66,7 @@ public abstract class ADatabaseProvider(AMigrationConfiguration migrationConfigu
         if (result == null) return version;
         try
         {
-            version = Convert.ToString(result);
+            version = Convert.ToInt32(result);
         }
         catch
         {
@@ -72,12 +74,12 @@ public abstract class ADatabaseProvider(AMigrationConfiguration migrationConfigu
                 "Database Provider returns a value for the current version which isn't a string");
         }
 
-        return version ?? throw new MigrationException("Version returned a null value");
+        return version;
     }
 
-    public virtual async Task<string> GetVersionAsync(CancellationToken cancellationToken = default)
+    public virtual async Task<int> GetVersionAsync(CancellationToken cancellationToken = default)
     {
-        var version = string.Empty;
+        var version = 0;
         await using var command = Connection.CreateCommand();
         command.CommandText = GetLastMigrationSql();
         command.Transaction = null;
@@ -86,7 +88,7 @@ public abstract class ADatabaseProvider(AMigrationConfiguration migrationConfigu
         if (result == null) return version;
         try
         {
-            version = Convert.ToString(result);
+            version = Convert.ToInt32(result);
         }
         catch
         {
@@ -94,7 +96,7 @@ public abstract class ADatabaseProvider(AMigrationConfiguration migrationConfigu
                 "Database Provider returns a value for the current version which isn't a string");
         }
 
-        return version ?? throw new MigrationException("Version returned a null value");
+        return version;
     }
 
     public virtual void ApplyMigration(IMigration migration)

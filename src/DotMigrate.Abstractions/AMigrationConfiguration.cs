@@ -8,6 +8,5 @@ public abstract class AMigrationConfiguration
     public string MigrationTableName { get; set; } = "_migrationHistory";
     public TimeSpan LockTimeOut { get; set; } = TimeSpan.FromSeconds(30);
     public MigrationMode Mode { get; set; } = MigrationMode.Migrate;
-    public int? FromVersion { get; set; }
     public int? ToVersion { get; set; }
 }
