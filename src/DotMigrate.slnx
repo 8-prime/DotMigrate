@@ -1,5 +1,8 @@
 <Solution>
-    <Project Path="DotMigrate.Abstractions/DotMigrate.Abstractions.csproj"/>
-    <Project Path="DotMigrate.Databases/DotMigrate.Databases.csproj"/>
-    <Project Path="DotMigrate/DotMigrate.csproj"/>
+    <Folder Name="/Tests/">
+        <Project Path="DotMigrate.Tests/DotMigrate.Tests.csproj" />
+    </Folder>
+    <Project Path="DotMigrate.Abstractions/DotMigrate.Abstractions.csproj" />
+    <Project Path="DotMigrate.Databases/DotMigrate.Databases.csproj" />
+    <Project Path="DotMigrate/DotMigrate.csproj" />
 </Solution>

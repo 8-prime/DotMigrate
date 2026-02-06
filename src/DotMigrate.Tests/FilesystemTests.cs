@@ -16,7 +16,10 @@ public class FilesystemTests
         try
         {
             var file = Path.Combine(dir, "001_create.sql");
-            await File.WriteAllTextAsync(file, "-- +DotMigrate Name Create;\n-- +DotMigrate Index 1\n-- +DotMigrate Up\nCREATE TABLE X;\n-- +DotMigrate BlockEnd\n");
+            await File.WriteAllTextAsync(
+                file,
+                "-- +DotMigrate Name Create;\n-- +DotMigrate Index 1\n-- +DotMigrate Up\nCREATE TABLE X;\n-- +DotMigrate BlockEnd\n"
+            );
 
             var source = new FilesystemMigrationSource(dir);
             var migrations = source.GetMigrations().ToList();
@@ -25,7 +28,11 @@ public class FilesystemTests
         }
         finally
         {
-            try { Directory.Delete(dir, true); } catch { }
+            try
+            {
+                Directory.Delete(dir, true);
+            }
+            catch { }
         }
     }
 }

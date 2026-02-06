@@ -28,13 +28,14 @@ public class MigrationOptionsBuilder<TMigrator>
     {
         if (_configuration is null || _source is null || _provider is null)
             throw new InvalidOperationException(
-                "You must provide a configuration, a migration source and a db provider before building");
+                "You must provide a configuration, a migration source and a db provider before building"
+            );
 
         return new MigrationOptions<TMigrator>
         {
             Configuration = _configuration,
             Source = _source,
-            Provider = _provider
+            Provider = _provider,
         };
     }
 }

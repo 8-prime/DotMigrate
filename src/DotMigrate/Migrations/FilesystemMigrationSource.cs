@@ -14,15 +14,16 @@ public class FilesystemMigrationSource : IMigrationSource
 
     public FilesystemMigrationSource(string path)
     {
-        if (!Directory.Exists(path)) throw new DirectoryNotFoundException(path);
+        if (!Directory.Exists(path))
+            throw new DirectoryNotFoundException(path);
 
         _path = path;
     }
 
-
     public IEnumerable<IMigration> GetMigrations()
     {
-        if (_migrations is not null) return _migrations;
+        if (_migrations is not null)
+            return _migrations;
 
         _migrations = [];
         foreach (var file in Directory.EnumerateFiles(_path, "*.sql*", SearchOption.AllDirectories))
@@ -31,27 +32,34 @@ public class FilesystemMigrationSource : IMigrationSource
         return _migrations;
     }
 
-    public async Task<IEnumerable<IMigration>> GetMigrationsAsync(CancellationToken cancellationToken)
+    public async Task<IEnumerable<IMigration>> GetMigrationsAsync(
+        CancellationToken cancellationToken
+    )
     {
-        if (_migrations is not null) return _migrations;
+        if (_migrations is not null)
+            return _migrations;
 
         _migrations = [];
         foreach (var file in Directory.EnumerateFiles(_path, "*.sql*", SearchOption.AllDirectories))
-            _migrations.Add(FileMigrationParser.Parse(await File.ReadAllLinesAsync(file, cancellationToken)));
+            _migrations.Add(
+                FileMigrationParser.Parse(await File.ReadAllLinesAsync(file, cancellationToken))
+            );
 
         return _migrations;
     }
 
     public IMigration? Latest()
     {
-        if (_migrations is null) GetMigrations();
+        if (_migrations is null)
+            GetMigrations();
 
         return _migrations?.OrderByDescending(m => m.Index).FirstOrDefault();
     }
 
     public async Task<IMigration?> LatestAsync(CancellationToken cancellationToken)
     {
-        if (_migrations is null) await GetMigrationsAsync(cancellationToken);
+        if (_migrations is null)
+            await GetMigrationsAsync(cancellationToken);
 
         return _migrations?.OrderByDescending(m => m.Index).FirstOrDefault();
     }

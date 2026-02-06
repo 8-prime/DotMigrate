@@ -3,5 +3,5 @@
 public enum MigrationMode
 {
     Validate,
-    Migrate
+    Migrate,
 }

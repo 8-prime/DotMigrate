@@ -10,16 +10,16 @@ namespace DotMigrate.Databases;
 
 public abstract class AMigrationDatabaseProvider(
     AMigrationConfiguration migrationConfiguration,
-    DbConnection connection)
-    : IMigrationDatabaseProvider
-
+    DbConnection connection
+) : IMigrationDatabaseProvider
 {
     protected readonly DbConnection Connection = connection;
     protected readonly AMigrationConfiguration MigrationConfiguration = migrationConfiguration;
 
     public virtual void GetLock()
     {
-        if (Connection.State != ConnectionState.Open) Connection.Open();
+        if (Connection.State != ConnectionState.Open)
+            Connection.Open();
 
         using var command = Connection.CreateCommand();
         command.CommandText = GetLockSql();
@@ -29,7 +29,8 @@ public abstract class AMigrationDatabaseProvider(
 
     public virtual async Task GetLockAsync(CancellationToken cancellationToken = default)
     {
-        if (Connection.State != ConnectionState.Open) await Connection.OpenAsync(cancellationToken);
+        if (Connection.State != ConnectionState.Open)
+            await Connection.OpenAsync(cancellationToken);
 
         await using var command = Connection.CreateCommand();
         command.CommandText = GetLockSql();
@@ -39,7 +40,8 @@ public abstract class AMigrationDatabaseProvider(
 
     public virtual void ReleaseLock()
     {
-        if (Connection.State != ConnectionState.Open) Connection.Open();
+        if (Connection.State != ConnectionState.Open)
+            Connection.Open();
 
         using var command = Connection.CreateCommand();
         command.CommandText = GetUnlockSql();
@@ -48,7 +50,8 @@ public abstract class AMigrationDatabaseProvider(
 
     public virtual async Task ReleaseLockAsync(CancellationToken cancellationToken = default)
     {
-        if (Connection.State != ConnectionState.Open) await Connection.OpenAsync(cancellationToken);
+        if (Connection.State != ConnectionState.Open)
+            await Connection.OpenAsync(cancellationToken);
 
         await using var command = Connection.CreateCommand();
         command.CommandText = GetUnlockSql();
@@ -63,7 +66,8 @@ public abstract class AMigrationDatabaseProvider(
         command.Transaction = null;
         var result = command.ExecuteScalar();
 
-        if (result == null) return version;
+        if (result == null)
+            return version;
         try
         {
             version = Convert.ToInt32(result);
@@ -71,7 +75,8 @@ public abstract class AMigrationDatabaseProvider(
         catch
         {
             throw new MigrationException(
-                "Database Provider returns a value for the current version which isn't a string");
+                "Database Provider returns a value for the current version which isn't a string"
+            );
         }
 
         return version;
@@ -85,7 +90,8 @@ public abstract class AMigrationDatabaseProvider(
         command.Transaction = null;
         var result = await command.ExecuteScalarAsync(cancellationToken);
 
-        if (result == null) return version;
+        if (result == null)
+            return version;
         try
         {
             version = Convert.ToInt32(result);
@@ -93,7 +99,8 @@ public abstract class AMigrationDatabaseProvider(
         catch
         {
             throw new MigrationException(
-                "Database Provider returns a value for the current version which isn't a string");
+                "Database Provider returns a value for the current version which isn't a string"
+            );
         }
 
         return version;
@@ -126,8 +133,10 @@ public abstract class AMigrationDatabaseProvider(
         }
     }
 
-    public virtual async Task ApplyMigrationAsync(IMigration migration,
-        CancellationToken cancellationToken = default)
+    public virtual async Task ApplyMigrationAsync(
+        IMigration migration,
+        CancellationToken cancellationToken = default
+    )
     {
         await using (var command = Connection.CreateCommand())
         {
@@ -163,7 +172,8 @@ public abstract class AMigrationDatabaseProvider(
 
     private void EnsureReady()
     {
-        if (Connection.State != ConnectionState.Open) Connection.Open();
+        if (Connection.State != ConnectionState.Open)
+            Connection.Open();
 
         GetLock();
         try
@@ -190,7 +200,8 @@ public abstract class AMigrationDatabaseProvider(
 
     private async Task EnsureReadyAsync(CancellationToken cancellationToken = default)
     {
-        if (Connection.State != ConnectionState.Open) await Connection.OpenAsync(cancellationToken);
+        if (Connection.State != ConnectionState.Open)
+            await Connection.OpenAsync(cancellationToken);
 
         await GetLockAsync(cancellationToken);
         try

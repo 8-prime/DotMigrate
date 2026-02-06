@@ -1,23 +1,25 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
 
-    <PropertyGroup>
-        <TargetFramework>net9.0</TargetFramework>
-        <Nullable>enable</Nullable>
-    </PropertyGroup>
+  <ItemGroup>
+    <Folder Include="MySql\" />
+    <Folder Include="PostgreSql\" />
+    <Folder Include="Sqlite\" />
+  </ItemGroup>
 
-    <ItemGroup>
-        <Folder Include="MySql\"/>
-        <Folder Include="PostgreSql\"/>
-        <Folder Include="Sqlite\"/>
-    </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DotMigrate.Abstractions\DotMigrate.Abstractions.csproj" />
+    <ProjectReference Include="..\DotMigrate\DotMigrate.csproj" />
+  </ItemGroup>
 
-    <ItemGroup>
-        <ProjectReference Include="..\DotMigrate.Abstractions\DotMigrate.Abstractions.csproj"/>
-        <ProjectReference Include="..\DotMigrate\DotMigrate.csproj"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.3"/>
-    </ItemGroup>
-
+  <ItemGroup>
+    <PackageReference Include="CSharpier.MsBuild">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Data.SqlClient" />
+  </ItemGroup>
 </Project>

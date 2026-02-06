@@ -17,7 +17,7 @@ public class ParserTests
             "-- +DotMigrate BlockStart",
             "-- +DotMigrate Up",
             "CREATE TABLE Foo (Id INT);",
-            "-- +DotMigrate BlockEnd"
+            "-- +DotMigrate BlockEnd",
         };
 
         var migration = (FileMigration)FileMigrationParser.Parse(lines);
@@ -39,7 +39,7 @@ public class ParserTests
             "ALTER TABLE Foo ADD Col INT;",
             "-- +DotMigrate Down",
             "ALTER TABLE Foo DROP COLUMN Col;",
-            "-- +DotMigrate BlockEnd"
+            "-- +DotMigrate BlockEnd",
         };
 
         var migration = (UpDownFileMigration)FileMigrationParser.Parse(lines);
@@ -58,7 +58,7 @@ public class ParserTests
             "-- +DotMigrate Index 3",
             "-- +DotMigrate Up",
             "SELECT 1;",
-            "-- +DotMigrate BlockEnd"
+            "-- +DotMigrate BlockEnd",
         };
 
         Assert.Throws<InvalidOperationException>(() => FileMigrationParser.Parse(lines));
@@ -72,7 +72,7 @@ public class ParserTests
             "-- +DotMigrate Name NoIndex",
             "-- +DotMigrate Up",
             "SELECT 1;",
-            "-- +DotMigrate BlockEnd"
+            "-- +DotMigrate BlockEnd",
         };
 
         Assert.Throws<InvalidOperationException>(() => FileMigrationParser.Parse(lines));

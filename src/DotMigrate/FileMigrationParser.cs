@@ -73,7 +73,8 @@ public static class FileMigrationParser
                 continue;
             }
 
-            if (directive.Equals("BlockEnd", StringComparison.OrdinalIgnoreCase)) inBlock = false;
+            if (directive.Equals("BlockEnd", StringComparison.OrdinalIgnoreCase))
+                inBlock = false;
         }
 
         if (name is null)
@@ -88,14 +89,14 @@ public static class FileMigrationParser
                 Name = name,
                 Index = index.Value,
                 Command = upBuilder.Length > 0 ? upBuilder.ToString().Trim() : string.Empty,
-                DownCommand = downBuilder.Length > 0 ? downBuilder.ToString().Trim() : string.Empty
+                DownCommand = downBuilder.Length > 0 ? downBuilder.ToString().Trim() : string.Empty,
             };
 
         return new FileMigration
         {
             Name = name,
             Index = index.Value,
-            Command = upBuilder.Length > 0 ? upBuilder.ToString().Trim() : string.Empty
+            Command = upBuilder.Length > 0 ? upBuilder.ToString().Trim() : string.Empty,
         };
     }
 

@@ -9,9 +9,11 @@ namespace DotMigrate.Extensions;
 
 public static class MigrationsSetupExtensions
 {
-    public static IHostApplicationBuilder MigrationsSetup<TMigrator>(this IHostApplicationBuilder builder,
+    public static IHostApplicationBuilder MigrationsSetup<TMigrator>(
+        this IHostApplicationBuilder builder,
         IMigrationSource source,
-        Action<MigrationOptionsBuilder<TMigrator>> configuration)
+        Action<MigrationOptionsBuilder<TMigrator>> configuration
+    )
     {
         var optionsBuilder = new MigrationOptionsBuilder<TMigrator>();
         configuration(optionsBuilder);
@@ -22,7 +24,9 @@ public static class MigrationsSetupExtensions
         return builder;
     }
 
-    public static IHostApplicationBuilder MigrateOnStart<TMigrator>(this IHostApplicationBuilder builder)
+    public static IHostApplicationBuilder MigrateOnStart<TMigrator>(
+        this IHostApplicationBuilder builder
+    )
     {
         builder.Services.AddHostedService<MigrationsRunerService<TMigrator>>();
         return builder;

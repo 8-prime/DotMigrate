@@ -6,10 +6,14 @@ public static class SqlSetupMigrationsExtensions
 {
     public static MigrationOptionsBuilder<TMigrator> UseMsSql<TMigrator>(
         this MigrationOptionsBuilder<TMigrator> builder,
-        MsSqlMigrationConfiguration configuration)
+        MsSqlMigrationConfiguration configuration
+    )
     {
         builder.WithConfiguration(configuration);
-        var provider = new MsSqlMigrationDatabaseProvider(configuration.ConnectionString, configuration);
+        var provider = new MsSqlMigrationDatabaseProvider(
+            configuration.ConnectionString,
+            configuration
+        );
         builder.WithProvider(provider);
         return builder;
     }
