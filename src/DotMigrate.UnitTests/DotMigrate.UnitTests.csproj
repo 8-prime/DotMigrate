@@ -3,6 +3,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <Nullable>enable</Nullable>
+    <RootNamespace>DotMigrate.Tests</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CSharpier.MsBuild">

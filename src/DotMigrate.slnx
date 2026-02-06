@@ -1,6 +1,6 @@
 <Solution>
     <Folder Name="/Tests/">
-        <Project Path="DotMigrate.Tests/DotMigrate.Tests.csproj" />
+        <Project Path="DotMigrate.UnitTests/DotMigrate.UnitTests.csproj" />
     </Folder>
     <Project Path="DotMigrate.Abstractions/DotMigrate.Abstractions.csproj" />
     <Project Path="DotMigrate.Databases/DotMigrate.Databases.csproj" />

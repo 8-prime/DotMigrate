@@ -1,124 +1,211 @@
 ﻿using System;
 using System.Text;
 using DotMigrate.Abstractions;
+using DotMigrate.Exceptions;
 using DotMigrate.Migrations;
 
 namespace DotMigrate;
 
-public static class FileMigrationParser
+public class FileMigrationParser
 {
+    private enum ParseState
+    {
+        Start,
+        Invalid,
+        Up,
+        InUpBlock,
+        Down,
+        InDownBlock,
+    }
+
     private const string DirectivePrefix = "+DotMigrate";
+    private const string NameDirective = "Name ";
+    private const string IndexDirective = "Index ";
+    private const string UpDirective = "Up";
+    private const string DownDirective = "Down";
+    private const string BeginBlockDirective = "BeginBlock";
+    private const string EndBlockDirective = "EndBlock";
 
     public static IMigration Parse(string[] lines)
     {
-        string? name = null;
-        int? index = null;
-
+        var mode = ParseState.Start;
         var upBuilder = new StringBuilder();
         var downBuilder = new StringBuilder();
+        int? index = null;
+        string? name = null;
 
-        var inUp = false;
-        var inDown = false;
-        var inBlock = false;
-
-        foreach (var rawLine in lines)
+        foreach (var line in lines)
         {
-            if (!TryParseDirective(rawLine, out var directive))
+            if (string.IsNullOrWhiteSpace(line))
             {
-                if (inBlock)
-                {
-                    var target = inUp ? upBuilder : downBuilder;
-                    target.AppendLine(rawLine);
-                }
-
                 continue;
             }
 
-            if (directive.StartsWith("Name ", StringComparison.OrdinalIgnoreCase))
+            var lineIsDirective = TryParseDirective(line, out var directive);
+            switch (mode)
             {
-                name = directive["Name ".Length..].Trim();
-                continue;
+                case ParseState.Start:
+                    if (!lineIsDirective)
+                    {
+                        throw new FileMigrationException(
+                            "Migration must specify directive in start state"
+                        );
+                    }
+
+                    if (directive.StartsWith(IndexDirective, StringComparison.OrdinalIgnoreCase))
+                    {
+                        index = int.Parse(directive[IndexDirective.Length..].Trim());
+                        continue;
+                    }
+
+                    if (directive.StartsWith(NameDirective, StringComparison.OrdinalIgnoreCase))
+                    {
+                        name = directive[NameDirective.Length..].Trim().ToString();
+                        continue;
+                    }
+
+                    if (directive.StartsWith(UpDirective, StringComparison.OrdinalIgnoreCase))
+                    {
+                        mode = ParseState.Up;
+                        continue;
+                    }
+
+                    if (directive.StartsWith(DownDirective, StringComparison.OrdinalIgnoreCase))
+                    {
+                        mode = ParseState.Down;
+                        continue;
+                    }
+
+                    throw new FileMigrationException(
+                        $"Invalid directive {directive} in start state"
+                    );
+                case ParseState.Invalid:
+                    throw new FileMigrationException("Invalid directive");
+                case ParseState.Up:
+                    if (
+                        !lineIsDirective
+                        || !directive.Equals(
+                            BeginBlockDirective,
+                            StringComparison.OrdinalIgnoreCase
+                        )
+                    )
+                    {
+                        throw new FileMigrationException(
+                            "Up directive must be followed with BeginBlock directive"
+                        );
+                    }
+
+                    mode = ParseState.InUpBlock;
+                    break;
+                case ParseState.InUpBlock:
+                    mode = HandleMigrationBlock(lineIsDirective, directive, line, upBuilder, mode);
+                    break;
+                case ParseState.Down:
+                    if (
+                        !lineIsDirective
+                        || !directive.Equals(
+                            BeginBlockDirective,
+                            StringComparison.OrdinalIgnoreCase
+                        )
+                    )
+                    {
+                        throw new FileMigrationException(
+                            "Down directive must be followed with BeginBlock directive"
+                        );
+                    }
+
+                    mode = ParseState.InDownBlock;
+                    break;
+                case ParseState.InDownBlock:
+                    mode = HandleMigrationBlock(
+                        lineIsDirective,
+                        directive,
+                        line,
+                        downBuilder,
+                        mode
+                    );
+                    break;
+                default:
+                    throw new FileMigrationException("Parser reached invalid internal state");
             }
+        }
 
-            if (directive.StartsWith("Index ", StringComparison.OrdinalIgnoreCase))
-            {
-                index = int.Parse(directive["Index ".Length..].Trim());
-                continue;
-            }
+        if (mode != ParseState.Start)
+        {
+            throw new FileMigrationException($"Migration was in state {mode} at end of file");
+        }
 
-            if (directive.Equals("Up", StringComparison.OrdinalIgnoreCase))
-            {
-                inUp = true;
-                inDown = false;
-                continue;
-            }
-
-            if (directive.Equals("Down", StringComparison.OrdinalIgnoreCase))
-            {
-                inUp = false;
-                inDown = true;
-                continue;
-            }
-
-            if (directive.Equals("BlockStart", StringComparison.OrdinalIgnoreCase))
-            {
-                // Default to only having up migration. Downs are not enforced
-                if (!inUp && !inDown)
-                {
-                    inUp = true;
-                    inDown = false;
-                }
-
-                inBlock = true;
-                continue;
-            }
-
-            if (directive.Equals("BlockEnd", StringComparison.OrdinalIgnoreCase))
-                inBlock = false;
+        if (index is null)
+        {
+            throw new FileMigrationException("Migration index must be set at end of file");
         }
 
         if (name is null)
-            throw new InvalidOperationException("Migration Name missing.");
-
-        if (index is null)
-            throw new InvalidOperationException("Migration Index missing.");
+        {
+            throw new FileMigrationException("Migration name must be set at end of file");
+        }
 
         if (downBuilder.Length > 0)
+        {
             return new UpDownFileMigration
             {
+                DownCommand = downBuilder.ToString(),
+                Command = upBuilder.ToString(),
                 Name = name,
                 Index = index.Value,
-                Command = upBuilder.Length > 0 ? upBuilder.ToString().Trim() : string.Empty,
-                DownCommand = downBuilder.Length > 0 ? downBuilder.ToString().Trim() : string.Empty,
             };
+        }
 
         return new FileMigration
         {
+            Command = upBuilder.ToString(),
             Name = name,
             Index = index.Value,
-            Command = upBuilder.Length > 0 ? upBuilder.ToString().Trim() : string.Empty,
         };
     }
 
-    private static bool TryParseDirective(string line, out string directive)
+    private static ParseState HandleMigrationBlock(
+        bool isDirective,
+        ReadOnlySpan<char> directive,
+        string line,
+        StringBuilder blockBuilder,
+        ParseState state
+    )
     {
-        directive = string.Empty;
+        if (isDirective)
+        {
+            return directive.Equals(EndBlockDirective, StringComparison.OrdinalIgnoreCase)
+                ? ParseState.Start
+                : throw new FileMigrationException(
+                    $"Only 'EndBlock' directive allowed within blocks. Used forbidden directive: {directive}"
+                );
+        }
 
-        var span = line.AsSpan().TrimStart();
+        blockBuilder.AppendLine(line);
+        return state;
+    }
+
+    private static bool TryParseDirective(ReadOnlySpan<char> line, out ReadOnlySpan<char> directive)
+    {
+        var span = line.TrimStart();
 
         // Must start with SQL line comment
         if (!span.StartsWith("--", StringComparison.Ordinal))
+        {
+            directive = Span<char>.Empty;
             return false;
+        }
 
         span = span[2..].TrimStart();
 
         // Must start with +DotMigrate
         if (!span.StartsWith(DirectivePrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            directive = Span<char>.Empty;
             return false;
+        }
 
-        span = span[DirectivePrefix.Length..].TrimStart();
-
-        directive = span.ToString();
+        directive = span[DirectivePrefix.Length..].TrimStart();
         return true;
     }
 }
