@@ -39,7 +39,7 @@ public class MsSqlMigrationDatabaseProvider : AMigrationDatabaseProvider
 
     protected override string CreateSchemaSql()
     {
-        return $"IF NOT EXISTS (select * from sys.schemas WHERE name ='{_sqlMigrationConfiguration.SchemaName}') EXECUTE ('CREATE SCHEMA [{_sqlMigrationConfiguration.MigrationTableName}]');";
+        return $"IF NOT EXISTS (select * from sys.schemas WHERE name ='{_sqlMigrationConfiguration.SchemaName}') EXECUTE ('CREATE SCHEMA [{_sqlMigrationConfiguration.SchemaName}]');";
     }
 
     protected override string CreateMigrationTableSql()
@@ -50,8 +50,8 @@ public class MsSqlMigrationDatabaseProvider : AMigrationDatabaseProvider
                             CREATE TABLE [{_sqlMigrationConfiguration.SchemaName}].[{_sqlMigrationConfiguration.MigrationTableName}](
                                 [Id] [int] IDENTITY(1,1) PRIMARY KEY NOT NULL,
                                 [Index] [int] NOT NULL,
-                                [Name] [nvarchar(64)] NOT NULL,
-                                [CreatedAt] [datetime2(7)] NOT NULL
+                                [Name] [nvarchar](64) NOT NULL,
+                                [CreatedAt] [datetime2](7) NOT NULL
                             )
                             END;
             """;

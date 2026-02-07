@@ -80,27 +80,44 @@ public sealed class Migrator<TMigrator> : IMigrator<TMigrator>
     {
         var latestMigration = await _migrationOptions.Provider.GetVersionAsync(cancellationToken);
         return (await _migrationOptions.Source.LatestAsync(cancellationToken))?.Index
-            == latestMigration;
+               == latestMigration;
     }
 
     public void MigrateOutstanding()
     {
         var latest = _migrationOptions.Provider.GetVersion();
-        MigrateToVersion(latest);
+        var appliedMigration = latest is null
+            ? _migrationOptions.Source.GetMigrations().MinBy(m => m.Index)
+            : (
+                _migrationOptions.Source.GetMigrations()
+            ).FirstOrDefault(m => m.Index == latest);
+        if (appliedMigration is null)
+            throw new MigrationException("Unknown migration applied in database");
+
+        var outstandingMigrations = (
+                _migrationOptions.Source.GetMigrations()
+            )
+            .Where(m => m.Index > appliedMigration.Index)
+            .OrderBy(m => m.Index);
+
+        foreach (var migration in outstandingMigrations)
+            _migrationOptions.Provider.ApplyMigration(migration);
     }
 
     public async Task MigrateOutstandingAsync(CancellationToken cancellationToken = default)
     {
         var latest = await _migrationOptions.Provider.GetVersionAsync(cancellationToken);
-        var appliedMigration = (
-            await _migrationOptions.Source.GetMigrationsAsync(cancellationToken)
-        ).FirstOrDefault(m => m.Index == latest);
+        var appliedMigration = latest is null
+            ? (await _migrationOptions.Source.GetMigrationsAsync(cancellationToken)).MinBy(m => m.Index)
+            : (
+                await _migrationOptions.Source.GetMigrationsAsync(cancellationToken)
+            ).FirstOrDefault(m => m.Index == latest);
         if (appliedMigration is null)
             throw new MigrationException("Unknown migration applied in database");
 
         var outstandingMigrations = (
-            await _migrationOptions.Source.GetMigrationsAsync(cancellationToken)
-        )
+                await _migrationOptions.Source.GetMigrationsAsync(cancellationToken)
+            )
             .Where(m => m.Index > appliedMigration.Index)
             .OrderBy(m => m.Index);
 
@@ -137,8 +154,8 @@ public sealed class Migrator<TMigrator> : IMigrator<TMigrator>
         }
 
         var outstandingMigrations = (
-            await _migrationOptions.Source.GetMigrationsAsync(cancellationToken)
-        )
+                await _migrationOptions.Source.GetMigrationsAsync(cancellationToken)
+            )
             .Where(m => m.Index > latest)
             .OrderBy(m => m.Index);
 

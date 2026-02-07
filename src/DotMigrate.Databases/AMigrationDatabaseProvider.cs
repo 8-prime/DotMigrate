@@ -56,21 +56,20 @@ public abstract class AMigrationDatabaseProvider(
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
-    public virtual int GetVersion()
+    public virtual int? GetVersion()
     {
         EnsureReady();
-        
-        var version = 0;
+
         using var command = Connection.CreateCommand();
         command.CommandText = GetLastMigrationSql();
         command.Transaction = null;
         var result = command.ExecuteScalar();
 
         if (result == null)
-            return version;
+            return null;
         try
         {
-            version = Convert.ToInt32(result);
+            return Convert.ToInt32(result);
         }
         catch
         {
@@ -78,25 +77,22 @@ public abstract class AMigrationDatabaseProvider(
                 "Database Provider returns a value for the current version which isn't a string"
             );
         }
-
-        return version;
     }
 
-    public virtual async Task<int> GetVersionAsync(CancellationToken cancellationToken = default)
+    public virtual async Task<int?> GetVersionAsync(CancellationToken cancellationToken = default)
     {
         await EnsureReadyAsync(cancellationToken);
-        
-        var version = 0;
+
         await using var command = Connection.CreateCommand();
         command.CommandText = GetLastMigrationSql();
         command.Transaction = null;
         var result = await command.ExecuteScalarAsync(cancellationToken);
 
         if (result == null)
-            return version;
+            return null;
         try
         {
-            version = Convert.ToInt32(result);
+            return Convert.ToInt32(result);
         }
         catch
         {
@@ -104,14 +100,12 @@ public abstract class AMigrationDatabaseProvider(
                 "Database Provider returns a value for the current version which isn't a string"
             );
         }
-
-        return version;
     }
 
     public virtual void ApplyMigration(IMigration migration)
     {
         EnsureReady();
-        
+
         GetLock();
         try
         {
@@ -151,7 +145,7 @@ public abstract class AMigrationDatabaseProvider(
     )
     {
         await EnsureReadyAsync(cancellationToken);
-        
+
         await GetLockAsync(cancellationToken);
         try
         {
