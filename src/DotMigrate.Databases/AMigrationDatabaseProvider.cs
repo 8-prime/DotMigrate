@@ -15,11 +15,12 @@ public abstract class AMigrationDatabaseProvider(
 {
     protected readonly DbConnection Connection = connection;
     protected readonly AMigrationConfiguration MigrationConfiguration = migrationConfiguration;
+    private bool _isInitialized = false;
+    private readonly SemaphoreSlim _initializationLock = new(1, 1);
 
     public virtual void GetLock()
     {
-        if (Connection.State != ConnectionState.Open)
-            Connection.Open();
+        EnsureOpen();
 
         using var command = Connection.CreateCommand();
         command.CommandText = GetLockSql();
@@ -29,8 +30,7 @@ public abstract class AMigrationDatabaseProvider(
 
     public virtual async Task GetLockAsync(CancellationToken cancellationToken = default)
     {
-        if (Connection.State != ConnectionState.Open)
-            await Connection.OpenAsync(cancellationToken);
+        await EnsureOpenAsync(cancellationToken);
 
         await using var command = Connection.CreateCommand();
         command.CommandText = GetLockSql();
@@ -40,8 +40,7 @@ public abstract class AMigrationDatabaseProvider(
 
     public virtual void ReleaseLock()
     {
-        if (Connection.State != ConnectionState.Open)
-            Connection.Open();
+        EnsureOpen();
 
         using var command = Connection.CreateCommand();
         command.CommandText = GetUnlockSql();
@@ -50,8 +49,7 @@ public abstract class AMigrationDatabaseProvider(
 
     public virtual async Task ReleaseLockAsync(CancellationToken cancellationToken = default)
     {
-        if (Connection.State != ConnectionState.Open)
-            await Connection.OpenAsync(cancellationToken);
+        await EnsureOpenAsync(cancellationToken);
 
         await using var command = Connection.CreateCommand();
         command.CommandText = GetUnlockSql();
@@ -60,6 +58,8 @@ public abstract class AMigrationDatabaseProvider(
 
     public virtual int GetVersion()
     {
+        EnsureReady();
+        
         var version = 0;
         using var command = Connection.CreateCommand();
         command.CommandText = GetLastMigrationSql();
@@ -84,6 +84,8 @@ public abstract class AMigrationDatabaseProvider(
 
     public virtual async Task<int> GetVersionAsync(CancellationToken cancellationToken = default)
     {
+        await EnsureReadyAsync(cancellationToken);
+        
         var version = 0;
         await using var command = Connection.CreateCommand();
         command.CommandText = GetLastMigrationSql();
@@ -108,28 +110,38 @@ public abstract class AMigrationDatabaseProvider(
 
     public virtual void ApplyMigration(IMigration migration)
     {
-        using (var command = Connection.CreateCommand())
+        EnsureReady();
+        
+        GetLock();
+        try
         {
-            command.Transaction = null;
-            command.CommandText = InsertMigrationSql();
+            using (var command = Connection.CreateCommand())
+            {
+                command.Transaction = null;
+                command.CommandText = InsertMigrationSql();
 
-            var versionParam = command.CreateParameter();
-            versionParam.ParameterName = "Index";
-            versionParam.Value = migration.Index;
-            command.Parameters.Add(versionParam);
+                var versionParam = command.CreateParameter();
+                versionParam.ParameterName = "Index";
+                versionParam.Value = migration.Index;
+                command.Parameters.Add(versionParam);
 
-            var oldVersionParam = command.CreateParameter();
-            oldVersionParam.ParameterName = "Name";
-            oldVersionParam.Value = migration.Name;
-            command.Parameters.Add(oldVersionParam);
-            command.ExecuteNonQuery();
+                var oldVersionParam = command.CreateParameter();
+                oldVersionParam.ParameterName = "Name";
+                oldVersionParam.Value = migration.Name;
+                command.Parameters.Add(oldVersionParam);
+                command.ExecuteNonQuery();
+            }
+
+            using (var command = Connection.CreateCommand())
+            {
+                command.CommandText = migration.Command;
+                command.Transaction = null;
+                command.ExecuteNonQuery();
+            }
         }
-
-        using (var command = Connection.CreateCommand())
+        finally
         {
-            command.CommandText = migration.Command;
-            command.Transaction = null;
-            command.ExecuteNonQuery();
+            ReleaseLock();
         }
     }
 
@@ -138,28 +150,38 @@ public abstract class AMigrationDatabaseProvider(
         CancellationToken cancellationToken = default
     )
     {
-        await using (var command = Connection.CreateCommand())
+        await EnsureReadyAsync(cancellationToken);
+        
+        await GetLockAsync(cancellationToken);
+        try
         {
-            command.Transaction = null;
-            command.CommandText = InsertMigrationSql();
+            await using (var command = Connection.CreateCommand())
+            {
+                command.Transaction = null;
+                command.CommandText = InsertMigrationSql();
 
-            var versionParam = command.CreateParameter();
-            versionParam.ParameterName = "Index";
-            versionParam.Value = migration.Index;
-            command.Parameters.Add(versionParam);
+                var versionParam = command.CreateParameter();
+                versionParam.ParameterName = "Index";
+                versionParam.Value = migration.Index;
+                command.Parameters.Add(versionParam);
 
-            var oldVersionParam = command.CreateParameter();
-            oldVersionParam.ParameterName = "Name";
-            oldVersionParam.Value = migration.Name;
-            command.Parameters.Add(oldVersionParam);
-            await command.ExecuteNonQueryAsync(cancellationToken);
+                var oldVersionParam = command.CreateParameter();
+                oldVersionParam.ParameterName = "Name";
+                oldVersionParam.Value = migration.Name;
+                command.Parameters.Add(oldVersionParam);
+                await command.ExecuteNonQueryAsync(cancellationToken);
+            }
+
+            await using (var command = Connection.CreateCommand())
+            {
+                command.CommandText = migration.Command;
+                command.Transaction = null;
+                await command.ExecuteNonQueryAsync(cancellationToken);
+            }
         }
-
-        await using (var command = Connection.CreateCommand())
+        finally
         {
-            command.CommandText = migration.Command;
-            command.Transaction = null;
-            await command.ExecuteNonQueryAsync(cancellationToken);
+            await ReleaseLockAsync(cancellationToken);
         }
     }
 
@@ -172,55 +194,87 @@ public abstract class AMigrationDatabaseProvider(
 
     private void EnsureReady()
     {
-        EnsureOpen();
+        if (_isInitialized)
+            return;
 
-        GetLock();
+        _initializationLock.Wait();
         try
         {
-            using (var command = Connection.CreateCommand())
-            {
-                command.CommandText = CreateSchemaSql();
-                command.Transaction = null; //TODO transaction?
-                command.ExecuteNonQuery();
-            }
+            if (_isInitialized)
+                return;
 
-            using (var command = Connection.CreateCommand())
+            EnsureOpen();
+
+            GetLock();
+            try
             {
-                command.CommandText = CreateMigrationTableSql();
-                command.Transaction = null; //TODO transaction?
-                command.ExecuteNonQuery();
+                using (var command = Connection.CreateCommand())
+                {
+                    command.CommandText = CreateSchemaSql();
+                    command.Transaction = null;
+                    command.ExecuteNonQuery();
+                }
+
+                using (var command = Connection.CreateCommand())
+                {
+                    command.CommandText = CreateMigrationTableSql();
+                    command.Transaction = null;
+                    command.ExecuteNonQuery();
+                }
+
+                _isInitialized = true;
+            }
+            finally
+            {
+                ReleaseLock();
             }
         }
         finally
         {
-            ReleaseLock();
+            _initializationLock.Release();
         }
     }
 
     private async Task EnsureReadyAsync(CancellationToken cancellationToken = default)
     {
-        await EnsureOpenAsync(cancellationToken);
+        if (_isInitialized)
+            return;
 
-        await GetLockAsync(cancellationToken);
+        await _initializationLock.WaitAsync(cancellationToken);
         try
         {
-            await using (var command = Connection.CreateCommand())
-            {
-                command.CommandText = CreateSchemaSql();
-                command.Transaction = null; //TODO transaction?
-                await command.ExecuteNonQueryAsync(cancellationToken);
-            }
+            if (_isInitialized)
+                return;
 
-            await using (var command = Connection.CreateCommand())
+            await EnsureOpenAsync(cancellationToken);
+
+            await GetLockAsync(cancellationToken);
+            try
             {
-                command.CommandText = CreateMigrationTableSql();
-                command.Transaction = null; //TODO transaction?
-                await command.ExecuteNonQueryAsync(cancellationToken);
+                await using (var command = Connection.CreateCommand())
+                {
+                    command.CommandText = CreateSchemaSql();
+                    command.Transaction = null;
+                    await command.ExecuteNonQueryAsync(cancellationToken);
+                }
+
+                await using (var command = Connection.CreateCommand())
+                {
+                    command.CommandText = CreateMigrationTableSql();
+                    command.Transaction = null;
+                    await command.ExecuteNonQueryAsync(cancellationToken);
+                }
+
+                _isInitialized = true;
+            }
+            finally
+            {
+                await ReleaseLockAsync(cancellationToken);
             }
         }
         finally
         {
-            await ReleaseLockAsync(cancellationToken);
+            _initializationLock.Release();
         }
     }
 
