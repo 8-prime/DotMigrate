@@ -1,33 +1,37 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-        <IsPackable>false</IsPackable>
-    </PropertyGroup>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
 
-    <ItemGroup>
-        <PackageReference Include="coverlet.collector" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
-        <PackageReference Include="Microsoft.NET.Test.Sdk"/>
-        <PackageReference Include="Testcontainers.MsSql" />
-        <PackageReference Include="xunit.v3" />
-    </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Testcontainers.MsSql" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+  </ItemGroup>
 
-    <ItemGroup>
-        <Using Include="Xunit"/>
-    </ItemGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\DotMigrate.Databases\DotMigrate.Databases.csproj" />
-      <ProjectReference Include="..\DotMigrate\DotMigrate.csproj" />
-    </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DotMigrate.Databases\DotMigrate.Databases.csproj" />
+    <ProjectReference Include="..\DotMigrate\DotMigrate.csproj" />
+  </ItemGroup>
 
-    <ItemGroup>
-      <None Update="Common\InitialMigration.sql">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-    </ItemGroup>
+  <ItemGroup>
+    <None Update="MultipleMigrations\**\*.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="SingleMigration\InitialMigration.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 
 </Project>

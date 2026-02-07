@@ -93,7 +93,7 @@ public class DependencyInjectionTests : IAsyncLifetime
     {
         await _msSqlContainer.StartAsync();
         var serviceCollection = new ServiceCollection();
-        serviceCollection.MigrationsSetup<TestMigrations>(new FilesystemMigrationSource("./Common"), opts =>
+        serviceCollection.MigrationsSetup<TestMigrations>(new FilesystemMigrationSource("./SingleMigration"), opts =>
             opts.UseMsSql(
                 new MsSqlMigrationConfiguration
                 {

@@ -17,9 +17,11 @@ public class FilesystemTests
         try
         {
             var file = Path.Combine(dir, "001_create.sql");
-            await File.WriteAllTextAsync(file,
-                "-- +DotMigrate Name Create;\n-- +DotMigrate Index 1\n-- +DotMigrate Up\nCREATE TABLE X;\n-- +DotMigrate BlockEnd\n"
-                , TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(
+                file,
+                "-- +DotMigrate Name Create;\n-- +DotMigrate Index 1\n-- +DotMigrate Up\nCREATE TABLE X;\n-- +DotMigrate BlockEnd\n",
+                TestContext.Current.CancellationToken
+            );
 
             var source = new FilesystemMigrationSource(dir);
             var migrations = source.GetMigrations().ToList();
@@ -47,14 +49,18 @@ public class FilesystemTests
         try
         {
             var file = Path.Combine(dir, "001_create.sql");
-            await File.WriteAllTextAsync(file,
-                "-- +DotMigrate Name Create;\n-- +DotMigrate Index 1\n-- +DotMigrate Up\nCREATE TABLE X;\n-- +DotMigrate BlockEnd\n"
-                , TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(
+                file,
+                "-- +DotMigrate Name Create;\n-- +DotMigrate Index 1\n-- +DotMigrate Up\nCREATE TABLE X;\n-- +DotMigrate BlockEnd\n",
+                TestContext.Current.CancellationToken
+            );
 
             var file2 = Path.Combine(dir, "002_create.sql");
-            await File.WriteAllTextAsync(file2,
-                "-- +DotMigrate Name Update;\n-- +DotMigrate Index 2\n-- +DotMigrate Up\nCREATE TABLE Y;\n-- +DotMigrate BlockEnd\n"
-                , TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(
+                file2,
+                "-- +DotMigrate Name Update;\n-- +DotMigrate Index 2\n-- +DotMigrate Up\nCREATE TABLE Y;\n-- +DotMigrate BlockEnd\n",
+                TestContext.Current.CancellationToken
+            );
 
             var source = new FilesystemMigrationSource(dir);
             var migrations = source.GetMigrations().ToList();
