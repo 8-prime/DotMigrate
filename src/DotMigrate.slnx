@@ -1,5 +1,9 @@
 <Solution>
+    <Folder Name="/SolutionItems/">
+        <File Path="Directory.Packages.props" />
+    </Folder>
     <Folder Name="/Tests/">
+        <Project Path="DotMigrate.IntegrationTests/DotMigrate.IntegrationTests.csproj" />
         <Project Path="DotMigrate.UnitTests/DotMigrate.UnitTests.csproj" />
     </Folder>
     <Project Path="DotMigrate.Abstractions/DotMigrate.Abstractions.csproj" />

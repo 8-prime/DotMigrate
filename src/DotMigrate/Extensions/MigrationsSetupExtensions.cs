@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using DotMigrate.Abstractions;
 using DotMigrate.Builder;
 using DotMigrate.Services;
@@ -9,26 +10,23 @@ namespace DotMigrate.Extensions;
 
 public static class MigrationsSetupExtensions
 {
-    public static IHostApplicationBuilder MigrationsSetup<TMigrator>(
-        this IHostApplicationBuilder builder,
+    public static IServiceCollection MigrationsSetup<TMigrator>(
+        this IServiceCollection services,
         IMigrationSource source,
         Action<MigrationOptionsBuilder<TMigrator>> configuration
     )
     {
+        if (services.All(sd => sd.ServiceType != typeof(MigrationsRunerService)))
+        {
+            services.AddHostedService<MigrationsRunerService>();
+        }
+
         var optionsBuilder = new MigrationOptionsBuilder<TMigrator>();
         configuration(optionsBuilder);
         optionsBuilder.WithSource(source);
-        builder.Services.AddSingleton(optionsBuilder.Create());
-        builder.Services.AddSingleton<IMigrator<TMigrator>, Migrator<TMigrator>>();
+        services.AddSingleton(optionsBuilder.Create());
+        services.AddSingleton<IMigrator<TMigrator>, Migrator<TMigrator>>();
 
-        return builder;
-    }
-
-    public static IHostApplicationBuilder MigrateOnStart<TMigrator>(
-        this IHostApplicationBuilder builder
-    )
-    {
-        builder.Services.AddHostedService<MigrationsRunerService<TMigrator>>();
-        return builder;
+        return services;
     }
 }

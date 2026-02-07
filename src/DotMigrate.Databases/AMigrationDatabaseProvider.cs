@@ -172,8 +172,7 @@ public abstract class AMigrationDatabaseProvider(
 
     private void EnsureReady()
     {
-        if (Connection.State != ConnectionState.Open)
-            Connection.Open();
+        EnsureOpen();
 
         GetLock();
         try
@@ -200,8 +199,7 @@ public abstract class AMigrationDatabaseProvider(
 
     private async Task EnsureReadyAsync(CancellationToken cancellationToken = default)
     {
-        if (Connection.State != ConnectionState.Open)
-            await Connection.OpenAsync(cancellationToken);
+        await EnsureOpenAsync(cancellationToken);
 
         await GetLockAsync(cancellationToken);
         try
@@ -223,6 +221,22 @@ public abstract class AMigrationDatabaseProvider(
         finally
         {
             await ReleaseLockAsync(cancellationToken);
+        }
+    }
+
+    private void EnsureOpen()
+    {
+        if (Connection.State != ConnectionState.Open)
+        {
+            Connection.Open();
+        }
+    }
+
+    private async Task EnsureOpenAsync(CancellationToken cancellationToken = default)
+    {
+        if (Connection.State != ConnectionState.Open)
+        {
+            await Connection.OpenAsync(cancellationToken);
         }
     }
 }

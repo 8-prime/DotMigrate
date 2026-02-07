@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace DotMigrate.Abstractions;
 
-public interface IMigrator<TMigrator>
+public interface IMigrator
 {
     public void Run();
     public Task RunAsync(CancellationToken cancellationToken = default);
@@ -14,3 +14,5 @@ public interface IMigrator<TMigrator>
     public void MigrateToVersion(int version);
     public Task MigrateToVersionAsync(int version, CancellationToken cancellationToken = default);
 }
+
+public interface IMigrator<TMigrator> : IMigrator;
