@@ -100,7 +100,8 @@ public class DependencyInjectionTests : IAsyncLifetime
                     ConnectionString = _msSqlContainer.GetConnectionString(),
                     SchemaName = "IntegrationTests",
                     Mode = MigrationMode.Migrate,
-                    MigrationTableName = "TestMigrations"
+                    MigrationTableName = "TestMigrations",
+                    DatabaseUser = "sa"
                 }));
 
         _serviceProvider = serviceCollection.BuildServiceProvider();

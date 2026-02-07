@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using DotMigrate.Abstractions;
@@ -80,49 +81,33 @@ public sealed class Migrator<TMigrator> : IMigrator<TMigrator>
     {
         var latestMigration = await _migrationOptions.Provider.GetVersionAsync(cancellationToken);
         return (await _migrationOptions.Source.LatestAsync(cancellationToken))?.Index
-               == latestMigration;
+            == latestMigration;
     }
 
     public void MigrateOutstanding()
     {
         var latest = _migrationOptions.Provider.GetVersion();
-        var appliedMigration = latest is null
-            ? _migrationOptions.Source.GetMigrations().MinBy(m => m.Index)
-            : (
-                _migrationOptions.Source.GetMigrations()
-            ).FirstOrDefault(m => m.Index == latest);
-        if (appliedMigration is null)
-            throw new MigrationException("Unknown migration applied in database");
+        var outstandingMigrations = latest is null
+            ? _migrationOptions.Source.GetMigrations()
+            : GetOutStandingMigrationBasedOnApplied(latest.Value);
 
-        var outstandingMigrations = (
-                _migrationOptions.Source.GetMigrations()
-            )
-            .Where(m => m.Index > appliedMigration.Index)
-            .OrderBy(m => m.Index);
-
-        foreach (var migration in outstandingMigrations)
+        foreach (var migration in outstandingMigrations.OrderBy(m => m.Index))
+        {
             _migrationOptions.Provider.ApplyMigration(migration);
+        }
     }
 
     public async Task MigrateOutstandingAsync(CancellationToken cancellationToken = default)
     {
         var latest = await _migrationOptions.Provider.GetVersionAsync(cancellationToken);
-        var appliedMigration = latest is null
-            ? (await _migrationOptions.Source.GetMigrationsAsync(cancellationToken)).MinBy(m => m.Index)
-            : (
-                await _migrationOptions.Source.GetMigrationsAsync(cancellationToken)
-            ).FirstOrDefault(m => m.Index == latest);
-        if (appliedMigration is null)
-            throw new MigrationException("Unknown migration applied in database");
+        var outstandingMigrations = latest is null
+            ? await _migrationOptions.Source.GetMigrationsAsync(cancellationToken)
+            : await GetOutStandingMigrationBasedOnAppliedAsync(latest.Value, cancellationToken);
 
-        var outstandingMigrations = (
-                await _migrationOptions.Source.GetMigrationsAsync(cancellationToken)
-            )
-            .Where(m => m.Index > appliedMigration.Index)
-            .OrderBy(m => m.Index);
-
-        foreach (var migration in outstandingMigrations)
+        foreach (var migration in outstandingMigrations.OrderBy(m => m.Index))
+        {
             await _migrationOptions.Provider.ApplyMigrationAsync(migration, cancellationToken);
+        }
     }
 
     public void MigrateToVersion(int version)
@@ -154,12 +139,46 @@ public sealed class Migrator<TMigrator> : IMigrator<TMigrator>
         }
 
         var outstandingMigrations = (
-                await _migrationOptions.Source.GetMigrationsAsync(cancellationToken)
-            )
+            await _migrationOptions.Source.GetMigrationsAsync(cancellationToken)
+        )
             .Where(m => m.Index > latest)
             .OrderBy(m => m.Index);
 
         foreach (var migration in outstandingMigrations)
             await _migrationOptions.Provider.ApplyMigrationAsync(migration, cancellationToken);
+    }
+
+    private IEnumerable<IMigration> GetOutStandingMigrationBasedOnApplied(
+        int appliedMigrationIndex,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var migrations = _migrationOptions.Source.GetMigrations();
+        var appliedMigration = migrations.FirstOrDefault(m => m.Index == appliedMigrationIndex);
+        if (appliedMigration is null)
+        {
+            throw new MigrationException("Unknown migration applied in database");
+        }
+
+        return _migrationOptions
+            .Source.GetMigrations()
+            .Where(m => m.Index > appliedMigration.Index);
+    }
+
+    private async Task<IEnumerable<IMigration>> GetOutStandingMigrationBasedOnAppliedAsync(
+        int appliedMigrationIndex,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var migrations = await _migrationOptions.Source.GetMigrationsAsync(cancellationToken);
+        var appliedMigration = migrations.FirstOrDefault(m => m.Index == appliedMigrationIndex);
+        if (appliedMigration is null)
+        {
+            throw new MigrationException("Unknown migration applied in database");
+        }
+
+        return (await _migrationOptions.Source.GetMigrationsAsync(cancellationToken)).Where(m =>
+            m.Index > appliedMigration.Index
+        );
     }
 }

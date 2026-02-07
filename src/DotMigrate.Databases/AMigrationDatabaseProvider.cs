@@ -128,7 +128,7 @@ public abstract class AMigrationDatabaseProvider(
 
             using (var command = Connection.CreateCommand())
             {
-                command.CommandText = migration.Command;
+                command.CommandText = InjectSchemaInformation(migration.Command);
                 command.Transaction = null;
                 command.ExecuteNonQuery();
             }
@@ -168,7 +168,7 @@ public abstract class AMigrationDatabaseProvider(
 
             await using (var command = Connection.CreateCommand())
             {
-                command.CommandText = migration.Command;
+                command.CommandText = InjectSchemaInformation(migration.Command);
                 command.Transaction = null;
                 await command.ExecuteNonQueryAsync(cancellationToken);
             }
@@ -185,6 +185,7 @@ public abstract class AMigrationDatabaseProvider(
     protected abstract string GetUnlockSql();
     protected abstract string CreateSchemaSql();
     protected abstract string CreateMigrationTableSql();
+    protected abstract string InjectSchemaInformation(string command);
 
     private void EnsureReady()
     {

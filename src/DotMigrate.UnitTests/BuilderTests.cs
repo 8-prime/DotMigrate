@@ -54,14 +54,14 @@ public class BuilderTests
             return Task.CompletedTask;
         }
 
-        public int GetVersion()
+        public int? GetVersion()
         {
             return 0;
         }
 
-        public Task<int> GetVersionAsync(CancellationToken cancellationToken = default)
+        public Task<int?> GetVersionAsync(CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(0);
+            return Task.FromResult<int?>(0);
         }
 
         public void ApplyMigration(IMigration migration) { }

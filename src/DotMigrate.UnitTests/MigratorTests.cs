@@ -16,11 +16,11 @@ public class MigratorTests
     private class TestProvider : IMigrationDatabaseProvider
     {
         private readonly List<IMigration> _applied = new();
-        public int Version { get; set; }
+        public int? Version { get; set; }
 
-        public int GetVersion() => Version;
+        public int? GetVersion() => Version;
 
-        public Task<int> GetVersionAsync(CancellationToken cancellationToken = default) =>
+        public Task<int?> GetVersionAsync(CancellationToken cancellationToken = default) =>
             Task.FromResult(Version);
 
         public void GetLock() { }
